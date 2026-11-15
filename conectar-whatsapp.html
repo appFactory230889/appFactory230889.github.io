@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#12233f" />
+  <title>Conectar WhatsApp | App Factory</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #12233f;
+      --blue: #1f4e8c;
+      --flame: #f28c28;
+      --paper: #eef1f5;
+      --white: #ffffff;
+      --muted: #52617a;
+      --line: #d5dbe4;
+      --ok: #11753a;
+      --error: #b3261e;
+      --display: "Bricolage Grotesque", "Segoe UI", sans-serif;
+      --body: "Atkinson Hyperlegible", "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: var(--body); font-size: 1.0625rem; line-height: 1.6; color: var(--ink); background: var(--paper); }
+    a { color: var(--blue); }
+    a:focus-visible, button:focus-visible { outline: 3px solid var(--flame); outline-offset: 3px; border-radius: 4px; }
+    .wrap { width: min(680px, 100% - 32px); margin-inline: auto; }
+
+    .topbar { background: var(--ink); color: var(--white); }
+    .topbar .wrap { width: min(1120px, 100% - 32px); padding-block: 14px; }
+    .brand { font-family: var(--display); font-weight: 800; font-size: 1.35rem; color: var(--white); text-decoration: none; display: inline-flex; align-items: center; gap: 10px; }
+    .brand-mark { width: 30px; height: 30px; flex: none; }
+
+    .hero { background: var(--ink); color: var(--white); padding-block: 28px 56px; }
+    .hero h1 { font-family: var(--display); font-weight: 800; font-size: clamp(1.7rem, 4.5vw, 2.4rem); line-height: 1.1; margin: 0 0 10px; letter-spacing: -0.01em; }
+    .hero p { margin: 0; color: #c9d3e3; }
+
+    .tarjeta { background: var(--white); border: 1px solid var(--line); border-radius: 18px; padding: 24px; margin-top: -32px; box-shadow: 0 8px 24px rgba(18, 35, 63, .08); }
+    .tarjeta h2 { font-family: var(--display); font-size: 1.15rem; margin: 0 0 8px; }
+    ol { padding-left: 22px; margin: 0; }
+    li { margin-bottom: 6px; }
+    .aviso { background: #fff4e6; border-left: 4px solid var(--flame); border-radius: 10px; padding: 12px 14px; margin: 18px 0 0; font-size: .97rem; }
+
+    button { width: 100%; margin-top: 20px; padding: 15px 22px; border: 2px solid var(--flame); border-radius: 999px; background: var(--flame); color: var(--ink); font-family: var(--body); font-size: 1.05rem; font-weight: 700; cursor: pointer; }
+    button:hover:not(:disabled) { background: #ff9d3d; border-color: #ff9d3d; }
+    button:disabled { background: #f6c99a; border-color: #f6c99a; cursor: default; }
+
+    #estado { margin-top: 18px; white-space: pre-line; }
+    .ok { color: var(--ok); } .error { color: var(--error); } .info { color: var(--muted); }
+
+    footer { color: var(--muted); font-size: .92rem; padding-block: 28px 40px; text-align: center; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <a class="brand" href="/">
+        <img class="brand-mark" src="/logo-app-factory.png" alt="" width="30" height="30">
+        App Factory
+      </a>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="wrap">
+      <h1>Conecta el WhatsApp de tu negocio con App Factory</h1>
+      <p>Su app WhatsApp Business sigue funcionando igual en su teléfono.</p>
+    </div>
+  </section>
+
+  <main class="wrap">
+    <div class="tarjeta">
+      <h2>Antes de empezar</h2>
+      <ol>
+        <li>Tenga a mano el teléfono con <b>WhatsApp Business</b> (actualizado) y con internet.</li>
+        <li>Inicie sesión con el Facebook que administra su negocio.</li>
+        <li>Cuando Meta lo pida, <b>escanee el código QR</b> desde WhatsApp Business y acepte compartir el historial.</li>
+        <li>No cierre esta página hasta ver el mensaje final.</li>
+      </ol>
+      <p class="aviso">Al conectar, WhatsApp Web y otros dispositivos enlazados se desconectan; después se vuelven a enlazar.</p>
+      <button id="btn" disabled>Cargando…</button>
+      <div id="estado" role="status"></div>
+    </div>
+  </main>
+
+  <footer>
+    © 2026 App Factory · Santa Ana, El Salvador · <a href="https://appfactorysv.com/privacy.html">Política de privacidad</a>
+  </footer>
+
+  <script>
+    const APP_ID = "2679386869198761";
+    const FUNCION = "https://us-central1-distribuidora-carols.cloudfunctions.net/conectarWhatsapp";
+    // Id de configuración de "Inicio de sesión con Facebook para empresas" (registro insertado de WhatsApp).
+    // Va aquí y no en la dirección: Meta amarra el código a la dirección EXACTA de la página, y solo
+    // https://appfactorysv.com/conectar-whatsapp.html (sin ?…) está en la lista de direcciones permitidas de la app.
+    const CONFIG_ID = "1481027817287539";
+    if (location.search) history.replaceState(null, "", location.pathname);
+
+    const btn = document.getElementById("btn");
+    const estado = document.getElementById("estado");
+    const mostrar = (texto, clase = "info") => { estado.className = clase; estado.textContent = texto; };
+
+    let sesion = {};   // waba_id y phone_number_id que manda Meta al terminar
+    let codigo = null; // código de un solo uso (vence en 30 segundos)
+    let enviado = false;
+
+    window.addEventListener("message", (event) => {
+      if (!String(event.origin).endsWith("facebook.com")) return;
+      let datos;
+      try { datos = JSON.parse(event.data); } catch { return; }
+      if (datos.type !== "WA_EMBEDDED_SIGNUP") return;
+      if (String(datos.event).startsWith("FINISH")) {
+        sesion = { wabaId: datos.data?.waba_id, phoneNumberId: datos.data?.phone_number_id };
+        enviar();
+      } else if (datos.event === "CANCEL") {
+        mostrar(`Se canceló en el paso: ${datos.data?.current_step || "desconocido"}. Puede intentarlo de nuevo.`, "error");
+        btn.disabled = false;
+      } else if (datos.event === "ERROR") {
+        mostrar(`Meta reportó un error: ${datos.data?.error_message || datos.data?.error_code}`, "error");
+        btn.disabled = false;
+      }
+    });
+
+    // Se manda en cuanto hay código y datos de la sesión (o a los 6 s si Meta no mandó la sesión).
+    async function enviar(forzar = false) {
+      if (enviado || !codigo || (!sesion.wabaId && !forzar)) return;
+      enviado = true;
+      mostrar("Conectando su número con App Factory… (no cierre la página)");
+      try {
+        const r = await fetch(FUNCION, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: codigo, wabaId: sesion.wabaId || "", phoneNumberId: sesion.phoneNumberId || "", pagina: location.href }),
+        });
+        const res = await r.json();
+        if (!res.ok) throw new Error(res.error || "Error desconocido");
+        mostrar(
+          `✅ ¡Listo! Su número ${res.numero} quedó conectado con App Factory.\n` +
+          `Coexistencia con la app: ${res.coexistencia ? "sí" : "no"}\n` +
+          `Contactos: ${res.sincronizacion?.smb_app_state_sync}\nHistorial: ${res.sincronizacion?.history}\n\n` +
+          `Deje la app WhatsApp Business abierta un rato mientras se sincroniza el historial.`, "ok");
+      } catch (e) {
+        mostrar(`No se pudo terminar la conexión: ${e.message}\nEnvíenos una captura de esta pantalla.`, "error");
+        btn.disabled = false;
+        enviado = false;
+      }
+    }
+
+    function iniciar() {
+      btn.disabled = true;
+      codigo = null; sesion = {}; enviado = false;
+      mostrar("Siga los pasos en la ventana de Meta…");
+      FB.login((respuesta) => {
+        if (respuesta.authResponse?.code) {
+          codigo = respuesta.authResponse.code;
+          enviar();
+          setTimeout(() => enviar(true), 6000);
+        } else if (!estado.classList.contains("error")) {
+          mostrar("No se completó el inicio de sesión. Puede intentarlo de nuevo.", "error");
+          btn.disabled = false;
+        }
+      }, {
+        config_id: CONFIG_ID,
+        response_type: "code",
+        override_default_response_type: true,
+        extras: { setup: {}, featureType: "whatsapp_business_app_onboarding", sessionInfoVersion: "3" },
+      });
+    }
+
+    window.fbAsyncInit = function () {
+      FB.init({ appId: APP_ID, autoLogAppEvents: true, xfbml: false, version: "v25.0" });
+      btn.textContent = "Conectar con WhatsApp Business";
+      btn.disabled = false;
+      btn.addEventListener("click", iniciar);
+    };
+  </script>
+  <script async defer crossorigin="anonymous" src="https://connect.facebook.net/es_LA/sdk.js"></script>
+</body>
+</html>
