@@ -51,7 +51,8 @@
     button:disabled { background: #f6c99a; border-color: #f6c99a; cursor: default; }
 
     #estado { margin-top: 18px; white-space: pre-line; }
-    .ok { color: var(--ok); } .error { color: var(--error); } .info { color: var(--muted); }
+    .ok { color: var(--ok); } .info { color: var(--muted); }
+    .reintentar { background: #fff4e6; border-left: 4px solid var(--flame); border-radius: 10px; padding: 12px 14px; color: var(--ink); }
 
     footer { color: var(--muted); font-size: .92rem; padding-block: 28px 40px; text-align: center; }
   </style>
@@ -104,6 +105,13 @@
     const btn = document.getElementById("btn");
     const estado = document.getElementById("estado");
     const mostrar = (texto, clase = "info") => { estado.className = clase; estado.textContent = texto; };
+    const AYUDA = "Si necesita ayuda, escríbanos por WhatsApp al +503 7541-5664.";
+    // Mensajes amables para quien conecta; el detalle técnico queda en la consola del navegador.
+    const reintentar = (texto, detalle) => {
+      if (detalle) console.warn("Conexión no completada:", detalle);
+      mostrar(`${texto}\nPuede intentarlo de nuevo cuando quiera. ${AYUDA}`, "reintentar");
+      btn.disabled = false;
+    };
 
     let sesion = {};   // waba_id y phone_number_id que manda Meta al terminar
     let codigo = null; // código de un solo uso (vence en 30 segundos)
@@ -118,11 +126,9 @@
         sesion = { wabaId: datos.data?.waba_id, phoneNumberId: datos.data?.phone_number_id };
         enviar();
       } else if (datos.event === "CANCEL") {
-        mostrar(`Se canceló en el paso: ${datos.data?.current_step || "desconocido"}. Puede intentarlo de nuevo.`, "error");
-        btn.disabled = false;
+        reintentar("La conexión se canceló antes de terminar.", datos.data?.current_step);
       } else if (datos.event === "ERROR") {
-        mostrar(`Meta reportó un error: ${datos.data?.error_message || datos.data?.error_code}`, "error");
-        btn.disabled = false;
+        reintentar("Meta no pudo completar la conexión en este momento.", datos.data?.error_message || datos.data?.error_code);
       }
     });
 
@@ -145,9 +151,13 @@
           `Contactos: ${res.sincronizacion?.smb_app_state_sync}\nHistorial: ${res.sincronizacion?.history}\n\n` +
           `Deje la app WhatsApp Business abierta un rato mientras se sincroniza el historial.`, "ok");
       } catch (e) {
-        mostrar(`No se pudo terminar la conexión: ${e.message}\nEnvíenos una captura de esta pantalla.`, "error");
-        btn.disabled = false;
         enviado = false;
+        // Sin los pasos de WhatsApp (ventana cerrada antes de tiempo o "Continuar como…"): no es un error grave.
+        if (/pasos de WhatsApp/i.test(e.message)) {
+          reintentar("La conexión no se completó: la ventana de Meta se cerró antes de terminar los pasos de WhatsApp.", e.message);
+        } else {
+          reintentar("No pudimos completar la conexión en este momento.", e.message);
+        }
       }
     }
 
@@ -160,9 +170,8 @@
           codigo = respuesta.authResponse.code;
           enviar();
           setTimeout(() => enviar(true), 6000);
-        } else if (!estado.classList.contains("error")) {
-          mostrar("No se completó el inicio de sesión. Puede intentarlo de nuevo.", "error");
-          btn.disabled = false;
+        } else if (!estado.classList.contains("reintentar")) {
+          reintentar("No se completó el inicio de sesión con Facebook.");
         }
       }, {
         config_id: CONFIG_ID,
